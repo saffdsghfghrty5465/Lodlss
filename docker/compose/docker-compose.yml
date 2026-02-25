@@ -9,8 +9,8 @@ services:
     restart: always
     networks:
       - tg-net
-    #ports:
-    #- "6379:6379"
+    ports:
+    - "6379:6379"
     volumes:
       - ./data/redis:/data
     command: ["redis-server", "--appendonly", "yes", "--save", "60", "1000"]
@@ -30,9 +30,9 @@ services:
     restart: always
     networks:
       - tg-net
-    #ports:
-    #  - "5672:5672"
-    #  - "15672:15672"
+    ports:
+      - "5672:5672"
+      - "15672:15672"
     volumes:
       - ./data/rabbitmq:/var/lib/rabbitmq
     environment:
@@ -51,8 +51,8 @@ services:
     restart: always
     networks:
       - tg-net
-    #ports:
-    #  - "27017:27017"
+    ports:
+      - "27017:27017"
     command: ["mongod", "--quiet", "--logpath", "/dev/null", "--logappend"]
     volumes:
       - ./data/mongo/db:/data/db
@@ -73,9 +73,9 @@ services:
     networks:
       - tg-net
 
-    #ports:
-    #  - 9000:9000
-    #  - 9001:9001
+    ports:
+      - 9000:9000
+      - 9001:9001
     environment:
       MINIO_ROOT_USER: ${Minio__AccessKey}
       MINIO_ROOT_PASSWORD: ${Minio__SecretKey}
@@ -210,21 +210,21 @@ services:
       redis:
         condition: service_healthy
 
-  # ### 2.Seq server
-  # seq-server:
-  # image: mytelegram/mytelegram-seq-server:${MyTelegramVersion}
-  # restart: always
-  # networks:
-  # - tg-net
-  # #ports:
-  # #  - "10001:80"
-  # environment:
-  # ConnectionStrings__Default: ${DefaultConnectionStrings}
-  # Serilog__MinimumLevel__Default: ${DefaultLogLevel}
-  # volumes:
-  # - ./data/mytelegram/seq/logs:/data/Logs
-  # depends_on:
-  # - mongodb
+  ### 2.Seq server
+   seq-server:
+   image: mytelegram/mytelegram-seq-server:${MyTelegramVersion}
+   restart: always
+   networks:
+   - tg-net
+  ports:
+    - "10001:80"
+   environment:
+   ConnectionStrings__Default: ${DefaultConnectionStrings}
+   Serilog__MinimumLevel__Default: ${DefaultLogLevel}
+   volumes:
+   - ./data/mytelegram/seq/logs:/data/Logs
+   depends_on:
+   - mongodb
 
   ### 2.Auth server
   auth-server:
@@ -288,21 +288,21 @@ services:
       redis:
         condition: service_healthy
 
-  # ### 5.Messenger grpc server
-  # messenger-grpc-server:
-  #   image: mytelegram/mytelegram-messenger-grpc-service:${MyTelegramVersion}
-  #   restart: always
-  #   networks:
-  #     - tg-net
-  #   environment:
-  #     Serilog__MinimumLevel__Default: ${Serilog__MinimumLevel__Default}
-  #     ConnectionStrings__Default: ${ConnectionStrings__Default}
-  #     App__DatabaseName: ${App__DatabaseName}
-  #     App__BotDatabaseName: ${App__BotDatabaseName}
-  #   volumes:
-  #     - ./data/mytelegram/messenger-grpc-service/logs:/app/Logs
-  #   depends_on:
-  #     - mongodb
+   ### 5.Messenger grpc server
+   messenger-grpc-server:
+     image: mytelegram/mytelegram-messenger-grpc-service:${MyTelegramVersion}
+     restart: always
+     networks:
+      - tg-net
+     environment:
+       Serilog__MinimumLevel__Default: ${Serilog__MinimumLevel__Default}
+       ConnectionStrings__Default: ${ConnectionStrings__Default}
+       App__DatabaseName: ${App__DatabaseName}
+       App__BotDatabaseName: ${App__BotDatabaseName}
+     volumes:
+       - ./data/mytelegram/messenger-grpc-service/logs:/app/Logs
+     depends_on:
+       - mongodb
 
   ### 4.File server
   file-server:
@@ -555,3 +555,4 @@ services:
     depends_on:
       rabbitmq:
         condition: service_healthy
+
