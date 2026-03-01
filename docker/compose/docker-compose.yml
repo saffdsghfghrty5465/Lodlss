@@ -202,46 +202,7 @@ services:
       RabbitMQ__Connections__Default__Password: ${RabbitMQ__Connections__Default__Password}
       #RabbitMQ__EventBus__ClientName: ${RabbitMQ__EventBus__ClientName}
       RabbitMQ__EventBus__ExchangeName: ${RabbitMQ__EventBus__ExchangeName}
-    depends_on:
-      rabbitmq:
-        condition: service_healthy
-      mongodb:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
 
-# ### 2.Seq server
-   seq-server:
-   image: mytelegram/mytelegram-seq-server:${MyTelegramVersion}
-   restart: always
-   networks:
-   - tg-net
-  ports:
-    - "10001:80"
-   environment:
-   ConnectionStrings__Default: ${DefaultConnectionStrings}
-   Serilog__MinimumLevel__Default: ${DefaultLogLevel}
-   volumes:
-   - ./data/mytelegram/seq/logs:/data/Logs
-   depends_on:
-   - mongodb
-
-  ### 2.Auth server
-  auth-server:
-    image: ${MyTelegramRegistry}/mytelegram-auth-server:${MyTelegramVersion}
-    restart: always
-    networks:
-      - tg-net
-    environment:
-      Serilog__MinimumLevel__Default: ${Serilog__MinimumLevel__Default}
-      #App__PrivateKeyFilePath: ${App__PrivateKeyFilePath}
-      RabbitMQ__Connections__Default__HostName: ${RabbitMQ__Connections__Default__HostName:-rabbitmq}
-      RabbitMQ__Connections__Default__Port: ${RabbitMQ__Connections__Default__Port:-5672}
-      RabbitMQ__Connections__Default__UserName: ${RabbitMQ__Connections__Default__UserName:-test}
-      RabbitMQ__Connections__Default__Password: ${RabbitMQ__Connections__Default__Password}
-      #RabbitMQ__EventBus__ClientName: ${RabbitMQ__EventBus__ClientName}
-      RabbitMQ__EventBus__ExchangeName: ${RabbitMQ__EventBus__ExchangeName}
-      Redis__Configuration: ${Redis__Configuration}
     volumes:
       - ./data/mytelegram/auth/logs:/app/Logs
     depends_on:
@@ -272,7 +233,42 @@ services:
       # App__TempAuthKeyExpirationMinutes: ${App__TempAuthKeyExpirationMinutes}
       # App__CommandServerObjectIds: ${App__CommandServerObjectIds}
       RabbitMQ__Connections__Default__HostName: ${RabbitMQ__Connections__Default__HostName:-rabbitmq}
+      RabbitMQ__Connections__Default__Port: ${RabbitMQ__Connections    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      mongodb:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  seq-server:
+    image: mytelegram/mytelegram-seq-server:${MyTelegramVersion}
+    restart: always
+    networks:
+      - tg-net
+    ports:
+      - "10001:80"
+    environment:
+      ConnectionStrings__Default: ${DefaultConnectionStrings}
+      Serilog__MinimumLevel__Default: ${DefaultLogLevel}
+    volumes:
+      - ./data/mytelegram/seq/logs:/data/Logs
+    depends_on:
+      - mongodb
+
+  auth-server:
+    image: ${MyTelegramRegistry}/mytelegram-auth-server:${MyTelegramVersion}
+    restart: always
+    networks:
+      - tg-net
+    environment:
+      Serilog__MinimumLevel__Default: ${Serilog__MinimumLevel__Default}
+      RabbitMQ__Connections__Default__HostName: ${RabbitMQ__Connections__Default__HostName:-rabbitmq}
       RabbitMQ__Connections__Default__Port: ${RabbitMQ__Connections__Default__Port:-5672}
+      RabbitMQ__Connections__Default__UserName: ${RabbitMQ__Connections__Default__UserName:-test}
+      RabbitMQ__Connections__Default__Password: ${RabbitMQ__Connections__Default__Password}
+      RabbitMQ__EventBus__ExchangeName: ${RabbitMQ__EventBus__ExchangeName}
+      Redis__Configuration: ${Redis__Configuration}__Default__Port:-5672}
       RabbitMQ__Connections__Default__UserName: ${RabbitMQ__Connections__Default__UserName:-test}
       RabbitMQ__Connections__Default__Password: ${RabbitMQ__Connections__Default__Password}
       #RabbitMQ__EventBus__ClientName: ${RabbitMQ__EventBus__ClientName}
@@ -555,5 +551,6 @@ services:
     depends_on:
       rabbitmq:
         condition: service_healthy
+
 
 
