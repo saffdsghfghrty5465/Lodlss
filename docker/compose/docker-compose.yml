@@ -210,7 +210,7 @@ services:
       redis:
         condition: service_healthy
 
-  ### 2.Seq server
+# ### 2.Seq server
    seq-server:
    image: mytelegram/mytelegram-seq-server:${MyTelegramVersion}
    restart: always
@@ -555,4 +555,5 @@ services:
     depends_on:
       rabbitmq:
         condition: service_healthy
+
 
