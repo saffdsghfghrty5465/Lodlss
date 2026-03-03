@@ -32,9 +32,9 @@ services:
     volumes:
       - ./data/rabbitmq:/var/lib/rabbitmq
     environment:
-      RABBITMQ_DEFAULT_USER: ${RabbitMQ__Connections__Default__UserName:-test}
-      RABBITMQ_DEFAULT_PASS: ${RabbitMQ__Connections__Default__Password}
-      RABBITMQ_ERLANG_COOKIE: ${RabbitMQ__ErlangCookie:-changeme-cookie}
+      - RABBITMQ_DEFAULT_USER=${RabbitMQ__Connections__Default__UserName:-test}
+      - RABBITMQ_DEFAULT_PASS=${RabbitMQ__Connections__Default__Password}
+      - RABBITMQ_ERLANG_COOKIE=${RabbitMQ__ErlangCookie:-changeme-cookie}
     healthcheck:
       test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
       interval: 10s
@@ -69,8 +69,8 @@ services:
       - 9000:9000
       - 9001:9001
     environment:
-      MINIO_ROOT_USER: ${Minio__AccessKey}
-      MINIO_ROOT_PASSWORD: ${Minio__SecretKey}
+      - MINIO_ROOT_USER=${Minio__AccessKey}
+      - MINIO_ROOT_PASSWORD=${Minio__SecretKey}
     volumes:
       - ./data/minio:/data
     command: server /data --console-address ":9001"
@@ -87,16 +87,17 @@ services:
     networks:
       - tg-net
     environment:
-      Serilog__MinimumLevel__Default: ${Serilog__MinimumLevel__Default}
-      ConnectionStrings__Default: ${ConnectionStrings__Default}
-      App__DatabaseName: ${App__DatabaseName}
-      App__ReadModelDatabaseName: ${App__ReadModelDatabaseName}
-      App__CreateTestUsers: ${App__CreateTestUsers}
-      RabbitMQ__Connections__Default__HostName: rabbitmq
-      RabbitMQ__Connections__Default__Port: 5672
-      RabbitMQ__Connections__Default__UserName: ${RabbitMQ__Connections__Default__UserName:-test}
-      RabbitMQ__Connections__Default__Password: ${RabbitMQ__Connections__Default__Password}
-      RabbitMQ__EventBus__ExchangeName: ${RabbitMQ__EventBus__ExchangeName}
+      - COMPlus_EnableAVX=0
+      - Serilog__MinimumLevel__Default=${Serilog__MinimumLevel__Default}
+      - ConnectionStrings__Default=${ConnectionStrings__Default}
+      - App__DatabaseName=${App__DatabaseName}
+      - App__ReadModelDatabaseName=${App__ReadModelDatabaseName}
+      - App__CreateTestUsers=${App__CreateTestUsers}
+      - RabbitMQ__Connections__Default__HostName=rabbitmq
+      - RabbitMQ__Connections__Default__Port=5672
+      - RabbitMQ__Connections__Default__UserName=${RabbitMQ__Connections__Default__UserName:-test}
+      - RabbitMQ__Connections__Default__Password=${RabbitMQ__Connections__Default__Password}
+      - RabbitMQ__EventBus__ExchangeName=${RabbitMQ__EventBus__ExchangeName}
     volumes:
       - ./data/mytelegram/data-seeder/logs:/app/Logs
     depends_on:
@@ -117,16 +118,17 @@ services:
     volumes:
       - ./data/mytelegram/gateway/logs:/app/Logs
     environment:
-      Serilog__MinimumLevel__Default: ${Serilog__MinimumLevel__Default}
-      App__Servers__0__Port: ${App__Servers__0__Port}
-      App__Servers__1__Port: ${App__Servers__1__Port}
-      App__Servers__2__Port: ${App__Servers__2__Port}
-      App__Servers__3__Port: ${App__Servers__3__Port}
-      RabbitMQ__Connections__Default__HostName: rabbitmq
-      RabbitMQ__Connections__Default__Port: 5672
-      RabbitMQ__Connections__Default__UserName: ${RabbitMQ__Connections__Default__UserName:-test}
-      RabbitMQ__Connections__Default__Password: ${RabbitMQ__Connections__Default__Password}
-      RabbitMQ__EventBus__ExchangeName: ${RabbitMQ__EventBus__ExchangeName}
+      - COMPlus_EnableAVX=0
+      - Serilog__MinimumLevel__Default=${Serilog__MinimumLevel__Default}
+      - App__Servers__0__Port=${App__Servers__0__Port}
+      - App__Servers__1__Port=${App__Servers__1__Port}
+      - App__Servers__2__Port=${App__Servers__2__Port}
+      - App__Servers__3__Port=${App__Servers__3__Port}
+      - RabbitMQ__Connections__Default__HostName=rabbitmq
+      - RabbitMQ__Connections__Default__Port=5672
+      - RabbitMQ__Connections__Default__UserName=${RabbitMQ__Connections__Default__UserName:-test}
+      - RabbitMQ__Connections__Default__Password=${RabbitMQ__Connections__Default__Password}
+      - RabbitMQ__EventBus__ExchangeName=${RabbitMQ__EventBus__ExchangeName}
     depends_on:
       rabbitmq:
         condition: service_healthy
@@ -144,8 +146,8 @@ services:
     ports:
       - "10001:80"
     environment:
-      ConnectionStrings__Default: ${DefaultConnectionStrings}
-      Serilog__MinimumLevel__Default: ${DefaultLogLevel}
+      - ConnectionStrings__Default=${DefaultConnectionStrings}
+      - Serilog__MinimumLevel__Default=${DefaultLogLevel}
     volumes:
       - ./data/mytelegram/seq/logs:/data/Logs
     depends_on:
@@ -158,19 +160,20 @@ services:
     networks:
       - tg-net
     environment:
-      Serilog__MinimumLevel__Default: ${Serilog__MinimumLevel__Default}
-      RabbitMQ__Connections__Default__HostName: rabbitmq
-      RabbitMQ__Connections__Default__Port: 5672
-      RabbitMQ__Connections__Default__UserName: ${RabbitMQ__Connections__Default__UserName:-test}
-      RabbitMQ__Connections__Default__Password: ${RabbitMQ__Connections__Default__Password}
-      RabbitMQ__EventBus__ExchangeName: ${RabbitMQ__EventBus__ExchangeName}
-      Redis__Configuration: ${Redis__Configuration}
+      - COMPlus_EnableAVX=0
+      - Serilog__MinimumLevel__Default=${Serilog__MinimumLevel__Default}
+      - RabbitMQ__Connections__Default__HostName=rabbitmq
+      - RabbitMQ__Connections__Default__Port=5672
+      - RabbitMQ__Connections__Default__UserName=${RabbitMQ__Connections__Default__UserName:-test}
+      - RabbitMQ__Connections__Default__Password=${RabbitMQ__Connections__Default__Password}
+      - RabbitMQ__EventBus__ExchangeName=${RabbitMQ__EventBus__ExchangeName}
+      - Redis__Configuration=redis:6379
     volumes:
       - ./data/mytelegram/auth/logs:/app/Logs
     depends_on:
-      mongodb:
-        condition: service_healthy
       rabbitmq:
+        condition: service_healthy
+      mongodb:
         condition: service_healthy
       redis:
         condition: service_healthy
@@ -182,23 +185,24 @@ services:
     networks:
       - tg-net
     environment:
-      Serilog__MinimumLevel__Default: ${Serilog__MinimumLevel__Default}
-      ConnectionStrings__Default: ${ConnectionStrings__Default}
-      App__DatabaseName: ${App__DatabaseName}
-      App__ReadModelDatabaseName: ${App__ReadModelDatabaseName}
-      App__AccessHashSecretKey: ${App__AccessHashSecretKey}
-      RabbitMQ__Connections__Default__HostName: rabbitmq
-      RabbitMQ__Connections__Default__Port: 5672
-      RabbitMQ__Connections__Default__UserName: ${RabbitMQ__Connections__Default__UserName:-test}
-      RabbitMQ__Connections__Default__Password: ${RabbitMQ__Connections__Default__Password}
-      RabbitMQ__EventBus__ExchangeName: ${RabbitMQ__EventBus__ExchangeName}
-      Redis__Configuration: ${Redis__Configuration}
+      - COMPlus_EnableAVX=0
+      - Serilog__MinimumLevel__Default=${Serilog__MinimumLevel__Default}
+      - ConnectionStrings__Default=${ConnectionStrings__Default}
+      - App__DatabaseName=${App__DatabaseName}
+      - App__ReadModelDatabaseName=${App__ReadModelDatabaseName}
+      - App__AccessHashSecretKey=${App__AccessHashSecretKey}
+      - RabbitMQ__Connections__Default__HostName=rabbitmq
+      - RabbitMQ__Connections__Default__Port=5672
+      - RabbitMQ__Connections__Default__UserName=${RabbitMQ__Connections__Default__UserName:-test}
+      - RabbitMQ__Connections__Default__Password=${RabbitMQ__Connections__Default__Password}
+      - RabbitMQ__EventBus__ExchangeName=${RabbitMQ__EventBus__ExchangeName}
+      - Redis__Configuration=redis:6379
     volumes:
       - ./data/mytelegram/session/logs:/app/Logs
     depends_on:
-      mongodb:
-        condition: service_healthy
       rabbitmq:
+        condition: service_healthy
+      mongodb:
         condition: service_healthy
       redis:
         condition: service_healthy
@@ -210,29 +214,25 @@ services:
     networks:
       - tg-net
     environment:
-      Serilog__MinimumLevel__Default: ${Serilog__MinimumLevel__Default}
-      ConnectionStrings__Default: ${ConnectionStrings__Default}
-      App__DatabaseName: ${App__DatabaseName}
-      App__ReadModelDatabaseName: ${App__ReadModelDatabaseName}
-      App__AccessHashSecretKey: ${App__AccessHashSecretKey}
-      App__DcOptions__0__IpAddress: ${App__DcOptions__0__IpAddress}
-      App__DcOptions__1__IpAddress: ${App__DcOptions__1__IpAddress}
-      App__DcOptions__1__Port: ${App__DcOptions__1__Port}
-      App__DcOptions__2__IpAddress: ${App__DcOptions__2__IpAddress}
-      App__DcOptions__3__IpAddress: ${App__DcOptions__3__IpAddress}
-      RabbitMQ__Connections__Default__HostName: rabbitmq
-      RabbitMQ__Connections__Default__Port: 5672
-      RabbitMQ__Connections__Default__UserName: ${RabbitMQ__Connections__Default__UserName:-test}
-      RabbitMQ__Connections__Default__Password: ${RabbitMQ__Connections__Default__Password}
-      RabbitMQ__EventBus__ExchangeName: ${RabbitMQ__EventBus__ExchangeName}
-      Redis__Configuration: ${Redis__Configuration}
+      - COMPlus_EnableAVX=0
+      - Serilog__MinimumLevel__Default=${Serilog__MinimumLevel__Default}
+      - ConnectionStrings__Default=${ConnectionStrings__Default}
+      - App__DatabaseName=${App__DatabaseName}
+      - App__ReadModelDatabaseName=${App__ReadModelDatabaseName}
+      - App__AccessHashSecretKey=${App__AccessHashSecretKey}
+      - App__DcOptions__0__IpAddress=${App__DcOptions__0__IpAddress}
+      - RabbitMQ__Connections__Default__HostName=rabbitmq
+      - RabbitMQ__Connections__Default__Port=5672
+      - RabbitMQ__Connections__Default__UserName=${RabbitMQ__Connections__Default__UserName:-test}
+      - RabbitMQ__Connections__Default__Password=${RabbitMQ__Connections__Default__Password}
+      - RabbitMQ__EventBus__ExchangeName=${RabbitMQ__EventBus__ExchangeName}
+      - Redis__Configuration=redis:6379
     volumes:
       - ./data/mytelegram/command-server/logs:/app/Logs
     depends_on:
-      mongodb:
-        condition: service_healthy
       rabbitmq:
+        condition: service_healthy
+      mongodb:
         condition: service_healthy
       redis:
         condition: service_healthy
-        
