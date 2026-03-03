@@ -35,7 +35,6 @@ services:
       - RABBITMQ_DEFAULT_USER=${RabbitMQ__Connections__Default__UserName:-test}
       - RABBITMQ_DEFAULT_PASS=${RabbitMQ__Connections__Default__Password}
       - RABBITMQ_ERLANG_COOKIE=${RabbitMQ__ErlangCookie:-changeme-cookie}
-      # Снижаем порог тревоги по памяти, чтобы RabbitMQ не блокировал соединения на слабых VPS
       - RABBITMQ_SERVER_ADDITIONAL_ERL_ARGS=-rabbit vm_memory_high_watermark 0.8
     healthcheck:
       test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
@@ -51,7 +50,6 @@ services:
       - tg-net
     ports:
       - "27017:27017"
-    # Ограничиваем размер кэша WiredTiger до 512МБ, чтобы не съела всю RAM
     command: ["mongod", "--quiet", "--logpath", "/dev/null", "--wiredTigerCacheSizeGB", "0.5"]
     volumes:
       - ./data/mongo/db:/data/db
@@ -62,51 +60,6 @@ services:
       timeout: 5s
       retries: 5
 
-  ### Minio
-  minio:
-    image: minio/minio:latest
-    restart: always
-    networks:
-      - tg-net
-    ports:
-      - 9000:9000
-      - 9001:9001
-    environment:
-      - MINIO_ROOT_USER=${Minio__AccessKey}
-      - MINIO_ROOT_PASSWORD=${Minio__SecretKey}
-    volumes:
-      - ./data/minio:/data
-    command: server /data --console-address ":9001"
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
-      interval: 15s
-      timeout: 5s
-      retries: 5
-
-  ### Data seeder
-  data-seeder:
-    image: ${MyTelegramRegistry}/mytelegram-data-seeder:${MyTelegramVersion}
-    restart: "no" # Сидеру не нужно постоянно перезапускаться
-    networks:
-      - tg-net
-    environment:
-      - COMPlus_EnableAVX=0
-      - Serilog__MinimumLevel__Default=${Serilog__MinimumLevel__Default}
-      - ConnectionStrings__Default=${ConnectionStrings__Default}
-      - App__DatabaseName=${App__DatabaseName}
-      - App__ReadModelDatabaseName=${App__ReadModelDatabaseName}
-      - App__CreateTestUsers=${App__CreateTestUsers}
-      - RabbitMQ__Connections__Default__HostName=rabbitmq
-      - RabbitMQ__Connections__Default__Port=5672
-      - RabbitMQ__Connections__Default__UserName=${RabbitMQ__Connections__Default__UserName:-test}
-      - RabbitMQ__Connections__Default__Password=${RabbitMQ__Connections__Default__Password}
-      - RabbitMQ__EventBus__ExchangeName=${RabbitMQ__EventBus__ExchangeName}
-    volumes:
-      - ./data/mytelegram/data-seeder/logs:/app/Logs
-    depends_on:
-      mongodb:
-        condition: service_healthy
-
   ### Gateway server
   gateway-server:
     image: ${MyTelegramRegistry}/mytelegram-gateway-server:${MyTelegramVersion}
@@ -116,27 +69,16 @@ services:
     ports:
       - "${App__Servers__0__Port}:${App__Servers__0__Port}"
       - "${App__Servers__1__Port}:${App__Servers__1__Port}"
-      - "${App__Servers__2__Port}:${App__Servers__2__Port}"
-      - "${App__Servers__3__Port}:${App__Servers__3__Port}"
-    volumes:
-      - ./data/mytelegram/gateway/logs:/app/Logs
     environment:
       - COMPlus_EnableAVX=0
-      - Serilog__MinimumLevel__Default=${Serilog__MinimumLevel__Default}
-      - App__Servers__0__Port=${App__Servers__0__Port}
-      - App__Servers__1__Port=${App__Servers__1__Port}
-      - App__Servers__2__Port=${App__Servers__2__Port}
-      - App__Servers__3__Port=${App__Servers__3__Port}
       - RabbitMQ__Connections__Default__HostName=rabbitmq
       - RabbitMQ__Connections__Default__Port=5672
       - RabbitMQ__Connections__Default__UserName=${RabbitMQ__Connections__Default__UserName:-test}
       - RabbitMQ__Connections__Default__Password=${RabbitMQ__Connections__Default__Password}
-      - RabbitMQ__EventBus__ExchangeName=${RabbitMQ__EventBus__ExchangeName}
     depends_on:
-      rabbitmq:
-        condition: service_healthy
-      mongodb:
-        condition: service_healthy
+      rabbitmq: { condition: service_healthy }
+      mongodb: { condition: service_healthy }
+      redis: { condition: service_healthy }
 
   ### Auth server
   auth-server:
@@ -146,20 +88,14 @@ services:
       - tg-net
     environment:
       - COMPlus_EnableAVX=0
-      - Serilog__MinimumLevel__Default=${Serilog__MinimumLevel__Default}
       - RabbitMQ__Connections__Default__HostName=rabbitmq
       - RabbitMQ__Connections__Default__Port=5672
       - RabbitMQ__Connections__Default__UserName=${RabbitMQ__Connections__Default__UserName:-test}
       - RabbitMQ__Connections__Default__Password=${RabbitMQ__Connections__Default__Password}
-      - RabbitMQ__EventBus__ExchangeName=${RabbitMQ__EventBus__ExchangeName}
       - Redis__Configuration=redis:6379
-    volumes:
-      - ./data/mytelegram/auth/logs:/app/Logs
     depends_on:
-      rabbitmq:
-        condition: service_healthy
-      mongodb:
-        condition: service_healthy
+      rabbitmq: { condition: service_healthy }
+      redis: { condition: service_healthy }
 
   ### Session server
   session-server:
@@ -169,180 +105,11 @@ services:
       - tg-net
     environment:
       - COMPlus_EnableAVX=0
-      - Serilog__MinimumLevel__Default=${Serilog__MinimumLevel__Default}
-      - ConnectionStrings__Default=${ConnectionStrings__Default}
-      - App__DatabaseName=${App__DatabaseName}
-      - App__ReadModelDatabaseName=${App__ReadModelDatabaseName}
-      - App__AccessHashSecretKey=${App__AccessHashSecretKey}
       - RabbitMQ__Connections__Default__HostName=rabbitmq
       - RabbitMQ__Connections__Default__Port=5672
       - RabbitMQ__Connections__Default__UserName=${RabbitMQ__Connections__Default__UserName:-test}
       - RabbitMQ__Connections__Default__Password=${RabbitMQ__Connections__Default__Password}
-      - RabbitMQ__EventBus__ExchangeName=${RabbitMQ__EventBus__ExchangeName}
       - Redis__Configuration=redis:6379
-    volumes:
-      - ./data/mytelegram/session/logs:/app/Logs
     depends_on:
-      rabbitmq:
-        condition: service_healthy
-      mongodb:
-        condition: service_healthy
-
-  ### Messenger command server
-  messenger-command-server:
-    image: ${MyTelegramRegistry}/mytelegram-messenger-command-server:${MyTelegramVersion}
-    restart: always
-    networks:
-      - tg-net
-    environment:
-      - COMPlus_EnableAVX=0
-      - Serilog__MinimumLevel__Default=${Serilog__MinimumLevel__Default}
-      - ConnectionStrings__Default=${ConnectionStrings__Default}
-      - App__DatabaseName=${App__DatabaseName}
-      - App__ReadModelDatabaseName=${App__ReadModelDatabaseName}
-      - App__AccessHashSecretKey=${App__AccessHashSecretKey}
-      - App__DcOptions__0__IpAddress=${App__DcOptions__0__IpAddress}
-      - RabbitMQ__Connections__Default__HostName=rabbitmq
-      - RabbitMQ__Connections__Default__Port=5672
-      - RabbitMQ__Connections__Default__UserName=${RabbitMQ__Connections__Default__UserName:-test}
-      - RabbitMQ__Connections__Default__Password=${RabbitMQ__Connections__Default__Password}
-      - RabbitMQ__EventBus__ExchangeName=${RabbitMQ__EventBus__ExchangeName}
-      - Redis__Configuration=redis:6379
-    volumes:
-      - ./data/mytelegram/command-server/logs:/app/Logs
-    depends_on:
-      rabbitmq:
-        condition: service_healthy
-      mongodb:
-        condition: service_healthy
-  gateway-server:
-    image: ${MyTelegramRegistry}/mytelegram-gateway-server:${MyTelegramVersion}
-    restart: always
-    networks:
-      - tg-net
-    ports:
-      - "${App__Servers__0__Port}:${App__Servers__0__Port}"
-      - "${App__Servers__1__Port}:${App__Servers__1__Port}"
-      - "${App__Servers__2__Port}:${App__Servers__2__Port}"
-      - "${App__Servers__3__Port}:${App__Servers__3__Port}"
-    volumes:
-      - ./data/mytelegram/gateway/logs:/app/Logs
-    environment:
-      - COMPlus_EnableAVX=0
-      - Serilog__MinimumLevel__Default=${Serilog__MinimumLevel__Default}
-      - App__Servers__0__Port=${App__Servers__0__Port}
-      - App__Servers__1__Port=${App__Servers__1__Port}
-      - App__Servers__2__Port=${App__Servers__2__Port}
-      - App__Servers__3__Port=${App__Servers__3__Port}
-      - RabbitMQ__Connections__Default__HostName=rabbitmq
-      - RabbitMQ__Connections__Default__Port=5672
-      - RabbitMQ__Connections__Default__UserName=${RabbitMQ__Connections__Default__UserName:-test}
-      - RabbitMQ__Connections__Default__Password=${RabbitMQ__Connections__Default__Password}
-      - RabbitMQ__EventBus__ExchangeName=${RabbitMQ__EventBus__ExchangeName}
-    depends_on:
-      rabbitmq:
-        condition: service_healthy
-      mongodb:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-
-  ### Seq server
-  seq-server:
-    image: mytelegram/mytelegram-seq-server:${MyTelegramVersion}
-    restart: always
-    networks:
-      - tg-net
-    ports:
-      - "10001:80"
-    environment:
-      - ConnectionStrings__Default=${DefaultConnectionStrings}
-      - Serilog__MinimumLevel__Default=${DefaultLogLevel}
-    volumes:
-      - ./data/mytelegram/seq/logs:/data/Logs
-    depends_on:
-      - mongodb
-
-  ### Auth server
-  auth-server:
-    image: ${MyTelegramRegistry}/mytelegram-auth-server:${MyTelegramVersion}
-    restart: always
-    networks:
-      - tg-net
-    environment:
-      - COMPlus_EnableAVX=0
-      - Serilog__MinimumLevel__Default=${Serilog__MinimumLevel__Default}
-      - RabbitMQ__Connections__Default__HostName=rabbitmq
-      - RabbitMQ__Connections__Default__Port=5672
-      - RabbitMQ__Connections__Default__UserName=${RabbitMQ__Connections__Default__UserName:-test}
-      - RabbitMQ__Connections__Default__Password=${RabbitMQ__Connections__Default__Password}
-      - RabbitMQ__EventBus__ExchangeName=${RabbitMQ__EventBus__ExchangeName}
-      - Redis__Configuration=redis:6379
-    volumes:
-      - ./data/mytelegram/auth/logs:/app/Logs
-    depends_on:
-      rabbitmq:
-        condition: service_healthy
-      mongodb:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-
-  ### Session server
-  session-server:
-    image: ${MyTelegramRegistry}/mytelegram-session-server:${MyTelegramVersion}
-    restart: always
-    networks:
-      - tg-net
-    environment:
-      - COMPlus_EnableAVX=0
-      - Serilog__MinimumLevel__Default=${Serilog__MinimumLevel__Default}
-      - ConnectionStrings__Default=${ConnectionStrings__Default}
-      - App__DatabaseName=${App__DatabaseName}
-      - App__ReadModelDatabaseName=${App__ReadModelDatabaseName}
-      - App__AccessHashSecretKey=${App__AccessHashSecretKey}
-      - RabbitMQ__Connections__Default__HostName=rabbitmq
-      - RabbitMQ__Connections__Default__Port=5672
-      - RabbitMQ__Connections__Default__UserName=${RabbitMQ__Connections__Default__UserName:-test}
-      - RabbitMQ__Connections__Default__Password=${RabbitMQ__Connections__Default__Password}
-      - RabbitMQ__EventBus__ExchangeName=${RabbitMQ__EventBus__ExchangeName}
-      - Redis__Configuration=redis:6379
-    volumes:
-      - ./data/mytelegram/session/logs:/app/Logs
-    depends_on:
-      rabbitmq:
-        condition: service_healthy
-      mongodb:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-
-  ### Messenger command server
-  messenger-command-server:
-    image: ${MyTelegramRegistry}/mytelegram-messenger-command-server:${MyTelegramVersion}
-    restart: always
-    networks:
-      - tg-net
-    environment:
-      - COMPlus_EnableAVX=0
-      - Serilog__MinimumLevel__Default=${Serilog__MinimumLevel__Default}
-      - ConnectionStrings__Default=${ConnectionStrings__Default}
-      - App__DatabaseName=${App__DatabaseName}
-      - App__ReadModelDatabaseName=${App__ReadModelDatabaseName}
-      - App__AccessHashSecretKey=${App__AccessHashSecretKey}
-      - App__DcOptions__0__IpAddress=${App__DcOptions__0__IpAddress}
-      - RabbitMQ__Connections__Default__HostName=rabbitmq
-      - RabbitMQ__Connections__Default__Port=5672
-      - RabbitMQ__Connections__Default__UserName=${RabbitMQ__Connections__Default__UserName:-test}
-      - RabbitMQ__Connections__Default__Password=${RabbitMQ__Connections__Default__Password}
-      - RabbitMQ__EventBus__ExchangeName=${RabbitMQ__EventBus__ExchangeName}
-      - Redis__Configuration=redis:6379
-    volumes:
-      - ./data/mytelegram/command-server/logs:/app/Logs
-    depends_on:
-      rabbitmq:
-        condition: service_healthy
-      mongodb:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
+      rabbitmq: { condition: service_healthy }
+      redis: { condition: service_healthy }
